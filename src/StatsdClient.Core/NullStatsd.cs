@@ -15,11 +15,8 @@ namespace StatsdClient
 
         public List<string> Commands { get; private set; }
 
+#if !NET451
         public async Task SendAsync<TCommandType>(string name, long value) where TCommandType : IAllowsInteger
-        {
-        }
-
-        public void Add<TCommandType>(string name, long value) where TCommandType : IAllowsInteger
         {
         }
 
@@ -27,16 +24,7 @@ namespace StatsdClient
         {
         }
 
-        public void Add<TCommandType>(string name, double value) where TCommandType : IAllowsDouble
-        {
-        }
-
         public async Task SendAsync<TCommandType>(string name, long value, double sampleRate)
-            where TCommandType : IAllowsInteger, IAllowsSampleRate
-        {
-        }
-
-        public void Add<TCommandType>(string name, long value, double sampleRate)
             where TCommandType : IAllowsInteger, IAllowsSampleRate
         {
         }
@@ -49,18 +37,66 @@ namespace StatsdClient
         {
         }
 
+        public async Task SendAsync<TCommandType>(string name, double value, bool isDeltaValue) where TCommandType : IAllowsDouble, IAllowsDelta
+        {
+        }
+
+        public async Task SendAsync(Func<Task> actionToTime, string statName, double sampleRate = 1)
+        {
+            await actionToTime();
+        }
+
+        public async Task<T> SendAsync<T>(Func<Task<T>> actionToTime, string statName, double sampleRate = 1)
+        {
+            return await actionToTime();
+        }
+#endif
+
+        public void Send<TCommandType>(string name, long value) where TCommandType : IAllowsInteger
+        {
+        }
+
+        public void Add<TCommandType>(string name, long value) where TCommandType : IAllowsInteger
+        {
+        }
+
+        public void Send<TCommandType>(string name, double value) where TCommandType : IAllowsDouble
+        {
+        }
+
+        public void Add<TCommandType>(string name, double value) where TCommandType : IAllowsDouble
+        {
+        }
+
+        public void Send<TCommandType>(string name, double value, bool isDeltaValue) where TCommandType : IAllowsDouble, IAllowsDelta
+        {
+        }
+
+        public void Send<TCommandType>(string name, long value, double sampleRate) where TCommandType : IAllowsInteger, IAllowsSampleRate
+        {
+        }
+
+        public void Add<TCommandType>(string name, long value, double sampleRate)
+            where TCommandType : IAllowsInteger, IAllowsSampleRate
+        {
+        }
+
+        public void Send<TCommandType>(string name, string value) where TCommandType : IAllowsString
+        {
+        }
+
+        public void Send()
+        {
+        }
+
         public void Add(Action actionToTime, string statName, double sampleRate = 1)
         {
             actionToTime();
         }
 
-        public async Task SendAsync(Action actionToTime, string statName, double sampleRate = 1)
+        public void Send(Action actionToTime, string statName, double sampleRate = 1)
         {
             actionToTime();
-        }
-
-        public async Task SendAsync<TCommandType>(string name, double value, bool isDeltaValue) where TCommandType : IAllowsDouble, IAllowsDelta
-        {
         }
     }
 #pragma warning restore 1998

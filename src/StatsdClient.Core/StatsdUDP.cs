@@ -7,46 +7,9 @@ using System.Threading.Tasks;
 
 namespace StatsdClient
 {
-    public interface IStatsdUDP
+    public partial class StatsdUDP : IDisposable, IStatsdUDP
     {
-        Task SendAsync(string command);
-    }
-
-    public class StatsdUDP : IDisposable, IStatsdUDP
-    {
-        public IPEndPoint IPEndpoint
-        {
-            get
-            {
-                if(_ipEndpoint == null) throw new Exception("Plaese call InitializeAsync() before using StatsdUDP");
-                return _ipEndpoint;
-            }
-            private set { _ipEndpoint = value; }
-        }
-
-        private readonly int _maxUdpPacketSizeBytes;
-        private readonly Socket _udpSocket;
-        private readonly string _name;
-        private readonly int _port;
-
-        /// <summary>
-        /// Creates a new StatsdUDP class for lower level access to statsd.
-        /// </summary>
-        /// <param name="name">Hostname or IP (v4) address of the statsd server.</param>
-        /// <param name="port">Port of the statsd server. Default is 8125.</param>
-        /// <param name="maxUdpPacketSizeBytes">Max packet size, in bytes. This is useful to tweak if your MTU size is different than normal. Set to 0 for no limit. Default is MetricsConfig.DefaultStatsdMaxUDPPacketSize.</param>
-        public StatsdUDP(
-            string name, 
-            int port = 8125, 
-            int maxUdpPacketSizeBytes = MetricsConfig.DefaultStatsdMaxUDPPacketSize)
-        {
-            _name = name;
-            _port = port;
-            _maxUdpPacketSizeBytes = maxUdpPacketSizeBytes;
-
-            _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        }
-
+#if !NET451
         public async Task InitializeAsync()
         {
             IPAddress ipAddress = await GetIpv4AddressAsync(_name);
@@ -118,49 +81,9 @@ namespace StatsdClient
             }
 
             ArraySegment<byte> encodedCommandSegment = new ArraySegment<byte>(encodedCommand);
-#if NET451 || NET451
-            _udpSocket.SendTo(encodedCommand, SocketFlags.None, IPEndpoint);
-#else
+
             await _udpSocket.SendToAsync(encodedCommandSegment, SocketFlags.None, IPEndpoint);
+        }
 #endif
-        }
-
-        //reference : https://lostechies.com/chrispatterson/2012/11/29/idisposable-done-right/
-        private bool _disposed;
-        private IPEndPoint _ipEndpoint;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        ~StatsdUDP() 
-        {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
-        }
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing)
-            {
-                if (_udpSocket != null)
-                {
-                    try
-                    {
-                        _udpSocket.Dispose();
-                    }
-                    catch (Exception)
-                    {
-                        //Swallow since we are not using a logger, should we add LibLog and start logging??
-                    }
-                    
-                }
-            }
-
-            _disposed = true;
-        }
     }
 }
