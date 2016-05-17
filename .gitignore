@@ -9,3 +9,4 @@ test-results/
 packages
 /.vs/config/applicationhost.config
 *project.lock.json
+/.vs/restore.dg
